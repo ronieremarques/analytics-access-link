@@ -1,0 +1,2170 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Analytics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root[data-theme="light"] {
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            --secondary-gradient: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+            --success-gradient: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
+            --background-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --hover-color: #f1f5f9;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --chart-grid: #e2e8f0;
+        }
+
+        :root[data-theme="dark"] {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+            --secondary-gradient: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+            --success-gradient: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            --card-gradient: linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%);
+            --background-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --hover-color: #334155;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.25);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.3);
+            --chart-grid: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            transition: all 0.3s ease;
+        }
+
+        /* Reset do layout */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Layout principal */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+            background: var(--background-color);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: var(--card-gradient);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Logo */
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        /* Navegação */
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: var(--hover-color);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Área principal */
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            padding: 1.5rem;
+            min-height: 100vh;
+            background: var(--background-color);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Cards de estatísticas */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--card-gradient);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Containers de gráficos */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            background: var(--card-gradient);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            height: 400px;
+        }
+
+        .chart-container:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .chart-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Tabela de sessões */
+        .sessions-table {
+            background: var(--card-gradient);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+            overflow: visible;
+            height: auto;
+            max-height: 500px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background: var(--background-color);
+            padding: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        tr:hover td {
+            background: var(--hover-color);
+        }
+
+        /* Botões */
+        .btn {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-danger {
+            background: var(--danger-gradient);
+        }
+
+        /* Responsividade */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .logo span, .nav-link span {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 80px;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--hover-color);
+        }
+
+        /* Tabs */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Loading */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 2rem;
+            height: 2rem;
+            border: 2px solid var(--border-color);
+            border-top-color: var(--text-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes spin {
+            to {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        /* Animações */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tab-content {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .trend-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .trend-item {
+            background: var(--background-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .trend-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .trend-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stat-trend {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-trend.up {
+            color: var(--success-color);
+        }
+
+        .stat-trend.down {
+            color: var(--danger-color);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            background: var(--card-background);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: var(--card-shadow);
+            height: 400px; /* Altura fixa para todos os containers */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            margin-bottom: 1rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        canvas {
+            flex: 1;
+            width: 100% !important;
+            height: calc(100% - 3rem) !important; /* Altura fixa para os canvas */
+        }
+
+        /* Estilo para o container principal */
+        .main-content {
+            height: 100vh;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Estilo para as tabs */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+            height: auto;
+            overflow: visible;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Ajuste para o grid de estatísticas */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: var(--card-background);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: var(--card-shadow);
+            height: 120px; /* Altura fixa para os cards de estatísticas */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Ajuste para a tabela de sessões */
+        .sessions-table {
+            background: var(--card-background);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: var(--card-shadow);
+            height: 600px; /* Altura fixa para a tabela */
+            overflow-y: auto;
+        }
+
+        /* Ajuste para o modal */
+        .modal-content {
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+            max-width: 700px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--card-gradient);
+            backdrop-filter: blur(15px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-lg);
+            margin: 2rem auto;
+            padding: 2rem;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .close-modal:hover {
+            color: var(--text-primary);
+            background: var(--hover-color);
+        }
+
+        /* Ajustes do layout */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+            background: var(--background-color);
+        }
+
+        .sidebar {
+            width: 240px;
+            background: var(--card-gradient);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: var(--shadow-md);
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            padding: 1.5rem;
+            min-height: 100vh;
+            background: var(--background-color);
+        }
+
+        /* Tabela de sessões */
+        .sessions-table {
+            background: var(--card-gradient);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+            overflow: visible;
+        }
+
+        #sessoesTable {
+            overflow-x: auto;
+        }
+
+        /* Detalhes da sessão */
+        .session-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .detail-group {
+            background: var(--background-color);
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .detail-group:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Adicionar antes do fechamento do header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Animações de Skeleton */
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, 
+                var(--card-bg) 0px, 
+                rgba(255, 255, 255, 0.1) 40px, 
+                var(--card-bg) 80px);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: 0.75rem;
+        }
+
+        .skeleton-card {
+            height: 100px;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .skeleton-chart {
+            height: 300px;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        /* Botão de Reset */
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Animação de Fade */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* Animação de Rotação */
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .rotate {
+            animation: rotate 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+                Analytics
+            </div>
+            <nav class="nav-links">
+                <a href="#" class="nav-link active" onclick="mostrarTab('resumo')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Resumo
+                </a>
+                <a href="#" class="nav-link" onclick="mostrarTab('geografico')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22C9.49872 19.2616 8.07725 15.708 8 12C8.07725 8.29203 9.49872 4.73835 12 2V2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Geografia
+                </a>
+                <a href="#" class="nav-link" onclick="mostrarTab('tempo')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Tempo
+                </a>
+                <a href="#" class="nav-link" onclick="mostrarTab('dispositivos')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 16V8C21 7.46957 20.7893 6.96086 20.4142 6.58579C20.0391 6.21071 19.5304 6 19 6H5C4.46957 6 3.96086 6.21071 3.58579 6.58579C3.21071 6.96086 3 7.46957 3 8V16C3 16.5304 3.21071 17.0391 3.58579 17.4142C3.96086 17.7893 4.46957 18 5 18H19C19.5304 18 20.0391 17.7893 20.4142 17.4142C20.7893 17.0391 21 16.5304 21 16Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M7 12H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Dispositivos
+                </a>
+                <a href="#" class="nav-link" onclick="mostrarTab('trafego')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Tráfego
+                </a>
+                <a href="#" class="nav-link" onclick="mostrarTab('sessoes')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Sessões
+                </a>
+            </nav>
+            <button onclick="toggleTheme()" class="btn" style="margin-top: auto;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 16C14.2091 16 16 14.2091 16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12C8 14.2091 9.79086 16 12 16Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 2V4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 20V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4.93 4.93L6.34 6.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M17.66 17.66L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M20 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M6.34 17.66L4.93 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M19.07 4.93L17.66 6.34" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Alterar Tema
+    </button>
+        </aside>
+
+        <main class="main-content">
+        <div class="header">
+            <h1>Dashboard de Analytics</h1>
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="atualizarDashboard()" class="btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M23 4V10H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M1 20V14H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3.51 9C4.01717 7.56678 4.87913 6.2854 6.01547 5.27542C7.1518 4.26543 8.52547 3.55976 10.0139 3.22426C11.5024 2.88875 13.0526 2.93434 14.5152 3.35677C15.9778 3.77921 17.3071 4.56471 18.37 5.63L23 10M1 14L5.63 18.37C6.69287 19.4353 8.02224 20.2208 9.48481 20.6432C10.9474 21.0657 12.4976 21.1112 13.9861 20.7757C15.4745 20.4402 16.8482 19.7346 17.9845 18.7246C19.1209 17.7146 19.9828 16.4332 20.49 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Atualizar Dados
+                </button>
+                <button onclick="resetarDados()" class="btn btn-danger">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Zerar Dados
+                </button>
+            </div>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div id="resumo" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalViews">0</div>
+                    <div class="stat-label">Visualizações Totais</div>
+                    <div class="stat-trend" id="viewsTrend"></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="uniqueUsers">0</div>
+                    <div class="stat-label">Usuários Únicos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="newUsers">0</div>
+                    <div class="stat-label">Novos Usuários (24h)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="returningUsers">0</div>
+                    <div class="stat-label">Usuários Recorrentes (24h)</div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalSessoes">0</div>
+                    <div class="stat-label">Total de Sessões</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="tempoMedio">0s</div>
+                    <div class="stat-label">Tempo Médio na Página</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="cliquesMedio">0</div>
+                    <div class="stat-label">Média de Cliques</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="scrollMedio">0%</div>
+                    <div class="stat-label">Scroll Médio Máximo</div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Tendência de Visualizações</h2>
+                    </div>
+                    <div class="trend-stats">
+                        <div class="trend-item">
+                            <div class="trend-label">Últimas 24h</div>
+                            <div class="trend-value" id="last24h">0</div>
+                        </div>
+                        <div class="trend-item">
+                            <div class="trend-label">Últimos 7 dias</div>
+                            <div class="trend-value" id="last7d">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nova seção de gráficos de usuários -->
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Usuários Novos vs Recorrentes</h2>
+                    </div>
+                    <canvas id="userTypeChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Engajamento de Usuários</h2>
+                    </div>
+                    <canvas id="engagementChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Tempo Médio por Usuário</h2>
+                    </div>
+                    <canvas id="timePerUserChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="geografico" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Distribuição por País</h2>
+                    </div>
+                    <canvas id="paisesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Top Países</h2>
+                    </div>
+                    <div id="topPaises"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tempo" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Atividade por Hora do Dia</h2>
+                    </div>
+                    <canvas id="horasChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Tendência de Visitas (7 dias)</h2>
+                    </div>
+                    <canvas id="tendenciaChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="dispositivos" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Tipos de Dispositivos</h2>
+                    </div>
+                    <canvas id="dispositivosChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Navegadores</h2>
+                    </div>
+                    <canvas id="browsersChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Sistemas Operacionais</h2>
+                    </div>
+                    <canvas id="osChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="trafego" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Fontes de Tráfego</h2>
+                    </div>
+                    <canvas id="trafegoChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Campanhas</h2>
+                    </div>
+                    <canvas id="campanhasChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="sessoes" class="tab-content">
+                <div class="sessions-table">
+                    <div class="chart-header">
+                        <h2 class="chart-title">Últimas Sessões</h2>
+                    </div>
+                <div id="sessoesTable">
+                    <div class="empty-state">Carregando dados...</div>
+                </div>
+            </div>
+        </div>
+        </main>
+    </div>
+
+    <!-- Modal de Detalhes -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <h2>Detalhes da Sessão</h2>
+            <div id="sessionDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        let paisesChart = null;
+        let horasChart = null;
+        
+        // Variáveis globais para armazenar as instâncias dos gráficos
+        let tendenciaChart = null;
+        let dispositivosChart = null;
+        let browsersChart = null;
+        let osChart = null;
+        let trafegoChart = null;
+        let campanhasChart = null;
+
+        // Adicionar variáveis globais para os novos gráficos
+        let userTypeChart = null;
+        let engagementChart = null;
+        let timePerUserChart = null;
+
+        // Função para alternar o tema
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Destruir e recriar os gráficos com as novas cores
+            destroyCharts();
+            atualizarDashboard();
+        }
+
+        // Carregar tema salvo
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        function formatarData(dataString) {
+            const data = new Date(dataString);
+            return data.toLocaleString('pt-BR');
+        }
+
+        function formatarDuracao(segundos) {
+            if (segundos < 60) return `${segundos} segundos`;
+            const minutos = Math.floor(segundos / 60);
+            segundos = segundos % 60;
+            if (minutos < 60) return `${minutos}m ${segundos}s`;
+            const horas = Math.floor(minutos / 60);
+            return `${horas}h ${minutos % 60}m ${segundos}s`;
+        }
+
+        function mostrarTab(tabId) {
+            // Remover classe active de todas as tabs e conteúdos
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-link').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Adicionar classe active na tab e conteúdo selecionados
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`.nav-link[onclick="mostrarTab('${tabId}')"]`).classList.add('active');
+        }
+
+        function getChartColors() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            return {
+                primary: isDark ? '#818cf8' : '#6366f1',
+                secondary: isDark ? '#4ade80' : '#22c55e',
+                tertiary: isDark ? '#f87171' : '#ef4444',
+                quaternary: isDark ? '#fbbf24' : '#eab308',
+                text: isDark ? '#f1f5f9' : '#1e293b',
+                grid: isDark ? '#334155' : '#e2e8f0',
+                background: isDark ? '#1e293b' : '#ffffff',
+                border: isDark ? '#475569' : '#cbd5e1'
+            };
+        }
+
+        function getChartConfig(type, data, options = {}) {
+            const colors = getChartColors();
+            const baseConfig = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: colors.text,
+                            padding: 15,
+                            usePointStyle: true,
+                            font: {
+                                family: "'Inter', sans-serif",
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: colors.background,
+                        titleColor: colors.text,
+                        bodyColor: colors.text,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        titleFont: {
+                            size: 13,
+                            weight: 600,
+                            family: "'Inter', sans-serif"
+                        },
+                        bodyFont: {
+                            size: 12,
+                            family: "'Inter', sans-serif"
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: colors.grid,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: colors.text,
+                            padding: 10,
+                            font: {
+                                family: "'Inter', sans-serif",
+                                size: 11
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: colors.text,
+                            padding: 10,
+                            font: {
+                                family: "'Inter', sans-serif",
+                                size: 11
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 750,
+                    easing: 'easeOutQuart'
+                }
+            };
+
+            return {
+                type,
+                data,
+                options: {
+                    ...baseConfig,
+                    ...options
+                }
+            };
+        }
+
+        function criarGraficoPaises(dados) {
+            const ctx = document.getElementById('paisesChart').getContext('2d');
+            const colors = getChartColors();
+            window.lastPaisesData = dados;
+
+            if (paisesChart) {
+                paisesChart.destroy();
+            }
+
+            const paises = Object.keys(dados);
+            const sessoes = paises.map(p => dados[p].sessoes);
+            const tempoMedio = paises.map(p => Math.round(dados[p].tempoTotal / dados[p].sessoes));
+
+            paisesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: paises,
+                    datasets: [{
+                        label: 'Sessões',
+                        data: sessoes,
+                        backgroundColor: colors.primary,
+                        borderColor: colors.primary,
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        maxBarThickness: 40
+                    }, {
+                        label: 'Tempo Médio (s)',
+                        data: tempoMedio,
+                        backgroundColor: colors.secondary,
+                        borderColor: colors.secondary,
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        maxBarThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            left: 10,
+                            right: 10,
+                            top: 10,
+                            bottom: 10
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'start',
+                            labels: {
+                                color: colors.text,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 20,
+                                font: {
+                                    family: 'Inter',
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: colors.background,
+                            titleColor: colors.text,
+                            bodyColor: colors.text,
+                            borderColor: colors.border,
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8,
+                            titleFont: {
+                                family: 'Inter',
+                                size: 14,
+                                weight: 600
+                            },
+                            bodyFont: {
+                                family: 'Inter',
+                                size: 12
+                            },
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.grid,
+                                drawBorder: false,
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                color: colors.text,
+                                padding: 10,
+                                font: {
+                                    family: 'Inter',
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.text,
+                                padding: 10,
+                                font: {
+                                    family: 'Inter',
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Atualizar top países
+            const topPaisesHTML = `
+                <div class="stats-grid">
+                    ${paises.map(pais => `
+                        <div class="stat-card">
+                            <div class="location-info">
+                                <img src="https://flagcdn.com/16x12/${pais.toLowerCase()}.png" 
+                                     alt="${pais}"
+                                     onerror="this.style.display='none'">
+                                <span>${pais}</span>
+                            </div>
+                            <div class="stat-value">${formatarNumero(dados[pais].sessoes)}</div>
+                            <div class="stat-label">sessões</div>
+                            <div class="stat-value">${formatarDuracao(Math.round(dados[pais].tempoTotal / dados[pais].sessoes))}</div>
+                            <div class="stat-label">tempo médio</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            document.getElementById('topPaises').innerHTML = topPaisesHTML;
+        }
+
+        function criarGraficoHoras(dados) {
+            const ctx = document.getElementById('horasChart').getContext('2d');
+            const colors = getChartColors();
+            window.lastHorasData = dados;
+
+            if (horasChart) {
+                horasChart.destroy();
+            }
+
+            const horas = Array.from({length: 24}, (_, i) => `${i}h`);
+            const sessoes = dados.map(d => d.sessoes);
+            const tempoMedio = dados.map(d => d.tempoMedio);
+
+            horasChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: horas,
+                    datasets: [{
+                        label: 'Sessões',
+                        data: sessoes,
+                        borderColor: colors.primary,
+                        backgroundColor: colors.primary + '20',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        borderWidth: 2
+                    }, {
+                        label: 'Tempo Médio (s)',
+                        data: tempoMedio,
+                        borderColor: colors.secondary,
+                        backgroundColor: colors.secondary + '20',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            left: 10,
+                            right: 10,
+                            top: 10,
+                            bottom: 10
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'start',
+                            labels: {
+                                color: colors.text,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 20,
+                                font: {
+                                    family: 'Inter',
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: colors.background,
+                            titleColor: colors.text,
+                            bodyColor: colors.text,
+                            borderColor: colors.border,
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8,
+                            titleFont: {
+                                family: 'Inter',
+                                size: 14,
+                                weight: 600
+                            },
+                            bodyFont: {
+                                family: 'Inter',
+                                size: 12
+                            },
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.grid,
+                                drawBorder: false,
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                color: colors.text,
+                                padding: 10,
+                                font: {
+                                    family: 'Inter',
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.text,
+                                padding: 10,
+                                font: {
+                                    family: 'Inter',
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function calcularEstatisticas(sessoes) {
+            if (sessoes.length === 0) return null;
+
+            const total = sessoes.length;
+            const tempoTotal = sessoes.reduce((acc, s) => acc + s.totalTimeOnPage, 0);
+            const cliquesTotal = sessoes.reduce((acc, s) => acc + s.clicks.length, 0);
+            const scrollTotal = sessoes.reduce((acc, s) => acc + s.maxScrollPercentage, 0);
+
+            return {
+                totalSessoes: total,
+                tempoMedio: Math.round(tempoTotal / total),
+                cliquesMedio: Math.round(cliquesTotal / total),
+                scrollMedio: Math.round(scrollTotal / total)
+            };
+        }
+
+        function showSessionDetails(session) {
+            const modal = document.getElementById('detailsModal');
+            const detailsContainer = document.getElementById('sessionDetails');
+
+            const details = `
+                <div class="session-details">
+                    <div class="detail-group">
+                        <div class="detail-label">ID da Sessão</div>
+                        <div class="detail-value">${session.sessionId}</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Início</div>
+                        <div class="detail-value">${formatarData(session.startTime)}</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Fim</div>
+                        <div class="detail-value">${formatarData(session.endTime)}</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Duração Total</div>
+                        <div class="detail-value">${formatarDuracao(session.totalTimeOnPage)}</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Navegador</div>
+                        <div class="detail-value">${session.sessionInfo.browserInfo.name} ${session.sessionInfo.browserInfo.version}</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Sistema Operacional</div>
+                        <div class="detail-value">${session.sessionInfo.browserInfo.os}</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Dispositivo</div>
+                        <div class="detail-value">${session.sessionInfo.browserInfo.isMobile ? 'Mobile' : session.sessionInfo.browserInfo.isTablet ? 'Tablet' : 'Desktop'}</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Resolução</div>
+                        <div class="detail-value">${session.screenResolution}</div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Localização</div>
+                        <div class="detail-value">
+                            País: ${session.location.country}<br>
+                            Região: ${session.location.region}<br>
+                            Cidade: ${session.location.city}
+                        </div>
+                    </div>
+                    <div class="detail-group">
+                        <div class="detail-label">Fonte de Tráfego</div>
+                        <div class="detail-value">
+                            Origem: ${session.trafficSource.source}<br>
+                            Meio: ${session.trafficSource.medium}<br>
+                            Campanha: ${session.trafficSource.campaign}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            detailsContainer.innerHTML = details;
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detailsModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailsModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Fechar modal com ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        function formatarNumero(numero) {
+            if (numero >= 1000000) {
+                return (numero / 1000000).toFixed(1) + 'M';
+            } else if (numero >= 1000) {
+                return (numero / 1000).toFixed(1) + 'K';
+            }
+            return numero.toString();
+        }
+
+        async function atualizarDashboard() {
+            try {
+                // Mostrar loading state
+                mostrarSkeleton();
+                
+                // Buscar dados
+                const [responseSession, responseStats] = await Promise.all([
+                    fetch('/api/analytics'),
+                    fetch('/api/analytics/stats')
+                ]);
+
+                if (!responseSession.ok || !responseStats.ok) {
+                    throw new Error('Erro ao carregar dados');
+                }
+
+                const sessoes = await responseSession.json();
+                const stats = await responseStats.json();
+
+                // Atualizar estatísticas
+                const updateElement = (id, value) => {
+                    const element = document.getElementById(id);
+                    if (element) element.textContent = value;
+                };
+
+                // Estatísticas principais
+                updateElement('totalViews', formatarNumero(stats.totalViews || 0));
+                updateElement('uniqueUsers', formatarNumero(stats.uniqueUsers?.length || 0));
+                updateElement('newUsers', formatarNumero(stats.newUsers || 0));
+                updateElement('returningUsers', formatarNumero(stats.returningUsers || 0));
+
+                // Tendências
+                updateElement('last24h', formatarNumero(stats.trends?.last24h || 0));
+                updateElement('last7d', formatarNumero(stats.trends?.last7d || 0));
+
+                // Estatísticas de sessão
+                if (sessoes && sessoes.length > 0) {
+                    const totalSessoes = sessoes.length;
+                    const tempoTotal = sessoes.reduce((acc, s) => acc + (s.totalTimeOnPage || 0), 0);
+                    const cliquesTotal = sessoes.reduce((acc, s) => acc + (s.clicks?.length || 0), 0);
+                    const scrollTotal = sessoes.reduce((acc, s) => acc + (s.maxScrollPercentage || 0), 0);
+
+                    updateElement('totalSessoes', formatarNumero(totalSessoes));
+                    updateElement('tempoMedio', formatarDuracao(Math.round(tempoTotal / totalSessoes)));
+                    updateElement('cliquesMedio', formatarNumero(Math.round(cliquesTotal / totalSessoes)));
+                    updateElement('scrollMedio', Math.round(scrollTotal / totalSessoes) + '%');
+                }
+
+                // Atualizar gráficos
+                if (stats) {
+                    if (document.getElementById('userTypeChart')) {
+                        criarGraficoTipoUsuario(stats);
+                    }
+                    if (document.getElementById('engagementChart')) {
+                        criarGraficoEngajamento(stats);
+                    }
+                    if (document.getElementById('timePerUserChart')) {
+                        criarGraficoTempoUsuario(stats);
+                    }
+                    if (document.getElementById('dispositivosChart')) {
+                        criarGraficoDispositivos(stats);
+                    }
+                    if (document.getElementById('browsersChart')) {
+                        criarGraficoBrowsers(stats);
+                    }
+                    if (document.getElementById('osChart')) {
+                        criarGraficoOS(stats);
+                    }
+                    if (document.getElementById('trafegoChart')) {
+                        criarGraficoTrafego(stats);
+                    }
+                }
+
+                // Atualizar tabela de sessões
+                const sessoesTable = document.getElementById('sessoesTable');
+                if (sessoesTable && sessoes && sessoes.length > 0) {
+                    const tabelaHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID da Sessão</th>
+                                    <th>Início</th>
+                                    <th>Duração</th>
+                                    <th>Navegador</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sessoes.map(sessao => `
+                                    <tr>
+                                        <td>${sessao.sessionId}</td>
+                                        <td>${formatarData(sessao.startTime)}</td>
+                                        <td>${formatarDuracao(sessao.totalTimeOnPage)}</td>
+                                        <td>${sessao.browserInfo?.name} ${sessao.browserInfo?.version}</td>
+                                        <td>
+                                            <button class="btn" onclick='showSessionDetails(${JSON.stringify(sessao)})'>
+                                                Ver Detalhes
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                    sessoesTable.innerHTML = tabelaHTML;
+                } else if (sessoesTable) {
+                    sessoesTable.innerHTML = `
+                        <div class="empty-state">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <p>Nenhuma sessão registrada ainda</p>
+                        </div>
+                    `;
+                }
+
+                // Remover loading state
+                removerSkeleton();
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                const errorElement = document.getElementById('errorMessage');
+                if (errorElement) {
+                    errorElement.textContent = 'Erro ao carregar dados. Por favor, tente novamente.';
+                    errorElement.style.display = 'block';
+                }
+            }
+        }
+
+        // Atualizar dashboard ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+        atualizarDashboard();
+            // Mostrar a primeira tab por padrão
+            mostrarTab('resumo');
+        });
+
+        // Atualizar a cada 30 segundos
+        const autoUpdateInterval = setInterval(atualizarDashboard, 30000);
+
+        // Limpar intervalo quando a página for fechada
+        window.addEventListener('beforeunload', () => {
+            clearInterval(autoUpdateInterval);
+        });
+
+        function criarGraficoTendencia(dados) {
+            const ctx = document.getElementById('tendenciaChart').getContext('2d');
+            const colors = getChartColors();
+
+            const datas = Array.from({length: 7}, (_, i) => {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                return date.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' });
+            }).reverse();
+
+            const config = {
+                type: 'line',
+                data: {
+                    labels: datas,
+                    datasets: [{
+                        label: 'Visitas',
+                        data: Array(7).fill(dados.trends.last24h / 7),
+                        borderColor: colors.primary,
+                        backgroundColor: colors.primary + '20',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.grid,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: colors.text
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.text
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (tendenciaChart) {
+                tendenciaChart.data = config.data;
+                tendenciaChart.options = config.options;
+                tendenciaChart.update('none');
+            } else {
+                tendenciaChart = new Chart(ctx, config);
+            }
+        }
+
+        function criarGraficoDispositivos(dados) {
+            const ctx = document.getElementById('dispositivosChart').getContext('2d');
+            const colors = getChartColors();
+
+            const config = {
+                type: 'doughnut',
+                data: {
+                    labels: ['Desktop', 'Mobile', 'Tablet'],
+                    datasets: [{
+                        data: [
+                            dados.dispositivos.desktop,
+                            dados.dispositivos.mobile,
+                            dados.dispositivos.tablet
+                        ],
+                        backgroundColor: [colors.primary, colors.secondary, colors.text],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: colors.text
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (dispositivosChart) {
+                dispositivosChart.data = config.data;
+                dispositivosChart.options = config.options;
+                dispositivosChart.update('none');
+            } else {
+                dispositivosChart = new Chart(ctx, config);
+            }
+        }
+
+        function criarGraficoBrowsers(dados) {
+            const ctx = document.getElementById('browsersChart').getContext('2d');
+            const colors = getChartColors();
+            const browsers = Object.entries(dados.dispositivos.browsers)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const config = {
+                type: 'bar',
+                data: {
+                    labels: browsers.map(b => b[0]),
+                    datasets: [{
+                        label: 'Usuários',
+                        data: browsers.map(b => b[1]),
+                        backgroundColor: colors.primary,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.grid,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: colors.text
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.text
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (browsersChart) {
+                browsersChart.data = config.data;
+                browsersChart.options = config.options;
+                browsersChart.update('none');
+            } else {
+                browsersChart = new Chart(ctx, config);
+            }
+        }
+
+        function criarGraficoOS(dados) {
+            const ctx = document.getElementById('osChart').getContext('2d');
+            const colors = getChartColors();
+            const sistemas = Object.entries(dados.dispositivos.os)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const config = {
+                type: 'pie',
+                data: {
+                    labels: sistemas.map(s => s[0]),
+                    datasets: [{
+                        data: sistemas.map(s => s[1]),
+                        backgroundColor: [
+                            colors.primary,
+                            colors.secondary,
+                            colors.text,
+                            colors.grid,
+                            colors.border
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: colors.text
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (osChart) {
+                osChart.data = config.data;
+                osChart.options = config.options;
+                osChart.update('none');
+            } else {
+                osChart = new Chart(ctx, config);
+            }
+        }
+
+        function criarGraficoTrafego(dados) {
+            const ctx = document.getElementById('trafegoChart').getContext('2d');
+            const colors = getChartColors();
+            const fontes = Object.entries(dados.trafego.sources)
+                .sort((a, b) => b[1] - a[1]);
+
+            const config = {
+                type: 'bar',
+                data: {
+                    labels: fontes.map(f => f[0]),
+                    datasets: [{
+                        label: 'Visitas',
+                        data: fontes.map(f => f[1]),
+                        backgroundColor: colors.primary,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.grid,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: colors.text
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.text
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (trafegoChart) {
+                trafegoChart.data = config.data;
+                trafegoChart.options = config.options;
+                trafegoChart.update('none');
+            } else {
+                trafegoChart = new Chart(ctx, config);
+            }
+        }
+
+        function criarGraficoCampanhas(dados) {
+            const ctx = document.getElementById('campanhasChart').getContext('2d');
+            const colors = getChartColors();
+            const campanhas = Object.entries(dados.trafego.campaigns)
+                .sort((a, b) => b[1] - a[1]);
+
+            const config = {
+                type: 'doughnut',
+                data: {
+                    labels: campanhas.map(c => c[0]),
+                    datasets: [{
+                        data: campanhas.map(c => c[1]),
+                        backgroundColor: [
+                            colors.primary,
+                            colors.secondary,
+                            colors.text,
+                            colors.grid,
+                            colors.border
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: colors.text
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (campanhasChart) {
+                campanhasChart.data = config.data;
+                campanhasChart.options = config.options;
+                campanhasChart.update('none');
+            } else {
+                campanhasChart = new Chart(ctx, config);
+            }
+        }
+
+        // Adicionar funções para criar os novos gráficos
+        function criarGraficoTipoUsuario(dados) {
+            const ctx = document.getElementById('userTypeChart').getContext('2d');
+            const colors = getChartColors();
+
+            const config = getChartConfig('doughnut', {
+                labels: ['Novos Usuários', 'Usuários Recorrentes'],
+                datasets: [{
+                    data: [dados.viewStats.newUsers, dados.viewStats.returningUsers],
+                    backgroundColor: [colors.primary, colors.secondary],
+                    borderWidth: 0,
+                    borderRadius: 4,
+                    spacing: 2
+                }]
+            }, {
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            });
+
+            if (userTypeChart) {
+                userTypeChart.data = config.data;
+                userTypeChart.options = config.options;
+                userTypeChart.update('none');
+            } else {
+                userTypeChart = new Chart(ctx, config);
+            }
+        }
+
+        function criarGraficoEngajamento(dados) {
+            const ctx = document.getElementById('engagementChart').getContext('2d');
+            const colors = getChartColors();
+
+            const totalSessions = dados.viewStats.totalViews;
+            const avgTimePerSession = dados.trends.averageTimeOnPage;
+            const interactionRate = Math.round((dados.viewStats.returningUsers / dados.viewStats.uniqueUsers) * 100);
+
+            const config = getChartConfig('bar', {
+                labels: ['Sessões Totais', 'Tempo Médio (s)', 'Taxa de Retorno (%)'],
+                datasets: [{
+                    data: [totalSessions, avgTimePerSession, interactionRate],
+                    backgroundColor: [colors.primary, colors.secondary, colors.tertiary],
+                    borderRadius: 8,
+                    borderWidth: 0,
+                    maxBarThickness: 40
+                }]
+            });
+
+            if (engagementChart) {
+                engagementChart.data = config.data;
+                engagementChart.options = config.options;
+                engagementChart.update('none');
+            } else {
+                engagementChart = new Chart(ctx, config);
+            }
+        }
+
+        function criarGraficoTempoUsuario(dados) {
+            const ctx = document.getElementById('timePerUserChart').getContext('2d');
+            const colors = getChartColors();
+
+            const config = getChartConfig('line', {
+                labels: ['0-30s', '30s-2min', '2-5min', '5-10min', '10min+'],
+                datasets: [{
+                    label: 'Usuários',
+                    data: [40, 30, 15, 10, 5],
+                    borderColor: colors.primary,
+                    backgroundColor: colors.primary + '20',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    borderWidth: 3
+                }]
+            }, {
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            });
+
+            if (timePerUserChart) {
+                timePerUserChart.data = config.data;
+                timePerUserChart.options = config.options;
+                timePerUserChart.update('none');
+            } else {
+                timePerUserChart = new Chart(ctx, config);
+            }
+        }
+
+        // Função para destruir todos os gráficos
+        function destroyCharts() {
+            if (tendenciaChart) tendenciaChart.destroy();
+            if (dispositivosChart) dispositivosChart.destroy();
+            if (browsersChart) browsersChart.destroy();
+            if (osChart) osChart.destroy();
+            if (trafegoChart) trafegoChart.destroy();
+            if (campanhasChart) campanhasChart.destroy();
+            if (userTypeChart) userTypeChart.destroy();
+            if (engagementChart) engagementChart.destroy();
+            if (timePerUserChart) timePerUserChart.destroy();
+            
+            tendenciaChart = null;
+            dispositivosChart = null;
+            browsersChart = null;
+            osChart = null;
+            trafegoChart = null;
+            campanhasChart = null;
+            userTypeChart = null;
+            engagementChart = null;
+            timePerUserChart = null;
+        }
+
+        async function resetarDados() {
+            if (!confirm('Tem certeza que deseja zerar todos os dados? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/analytics/reset', {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao resetar dados');
+                }
+
+                // Mostrar loading state
+                document.querySelectorAll('.stat-card, .chart-container').forEach(el => {
+                    el.innerHTML = '<div class="skeleton"></div>';
+                });
+
+                // Atualizar dashboard após 1 segundo para mostrar a animação
+                setTimeout(() => {
+                    atualizarDashboard();
+                }, 1000);
+
+                alert('Dados zerados com sucesso!');
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao resetar dados. Por favor, tente novamente.');
+            }
+        }
+
+        function mostrarSkeleton() {
+            // Stats cards
+            document.querySelectorAll('.stat-card').forEach(el => {
+                el.innerHTML = '<div class="skeleton skeleton-card"></div>';
+            });
+
+            // Charts
+            document.querySelectorAll('.chart-container').forEach(el => {
+                el.innerHTML = '<div class="skeleton skeleton-chart"></div>';
+            });
+        }
+
+        function removerSkeleton() {
+            document.querySelectorAll('.skeleton').forEach(el => {
+                el.remove();
+            });
+        }
+
+        // Inicializar com skeleton
+        document.addEventListener('DOMContentLoaded', () => {
+            mostrarSkeleton();
+            atualizarDashboard();
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Teste - Detector de Tráfego</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f2f5;
+            min-height: 200vh;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px auto;
+            max-width: 800px;
+        }
+        .interaction-area {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bem-vindo!</h1>
+        <p>Esta é uma página de teste para o detector de tráfego.</p>
+        <p>Suas informações de acesso estão sendo coletadas.</p>
+        <p><a href="/dashboard" target="_blank">Ver Dashboard de Analytics</a></p>
+        
+        <div class="interaction-area">
+            <h3>Área de Interação</h3>
+            <button onclick="handleButtonClick('botao1')">Botão 1</button>
+            <button onclick="handleButtonClick('botao2')">Botão 2</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuração do webhook para resumo final
+        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1318691593494204436/SycT0mltrMvUsqJqxnMsuMf6PUj2e6dDU1C5_X0HHLwWQuRzp2VKIGGf6EjQpnDRgHgx';
+        
+        // Variáveis para rastreamento
+        const sessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        const analyticsData = {
+            sessionId: sessionId,
+            startTime: new Date().toISOString(),
+            endTime: null,
+            pageLoadTime: new Date(),
+            lastActivityTime: new Date(),
+            mouseMovements: 0,
+            clicks: [],
+            scrollEvents: [],
+            buttonClicks: [],
+            userAgent: navigator.userAgent,
+            screenResolution: `${window.innerWidth}x${window.innerHeight}`,
+            totalTimeOnPage: 0,
+            maxScrollPercentage: 0,
+            pageType: 'index', // Identificador da página
+            sessionInfo: {
+                tabFocused: true,
+                lastActive: new Date().toISOString(),
+                pageLoadTime: performance.now(),
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: navigator.language,
+                doNotTrack: navigator.doNotTrack,
+                cookiesEnabled: navigator.cookieEnabled,
+                connectionType: (navigator.connection || {}).effectiveType || 'unknown'
+            },
+            trafficSource: {
+                referrer: document.referrer || 'Direto',
+                campaign: new URLSearchParams(window.location.search).get('utm_campaign') || 'Nenhuma',
+                medium: new URLSearchParams(window.location.search).get('utm_medium') || 'Direto',
+                source: new URLSearchParams(window.location.search).get('utm_source') || 'Direto'
+            },
+            performance: {
+                loadTime: 0,
+                domContentLoaded: 0,
+                firstPaint: 0,
+                firstContentfulPaint: 0
+            }
+        };
+
+        // Registrar visualização da página imediatamente
+        logEvent('page_view', { timestamp: new Date().toISOString() });
+
+        // Coletar métricas de performance
+        window.addEventListener('load', () => {
+            const timing = performance.timing;
+            analyticsData.performance = {
+                loadTime: timing.loadEventEnd - timing.navigationStart,
+                domContentLoaded: timing.domContentLoadedEventEnd - timing.navigationStart,
+                firstPaint: performance.getEntriesByType('paint').find(entry => entry.name === 'first-paint')?.startTime || 0,
+                firstContentfulPaint: performance.getEntriesByType('paint').find(entry => entry.name === 'first-contentful-paint')?.startTime || 0
+            };
+            logEvent('page_load', analyticsData.performance);
+        });
+        
+        // Função para registrar eventos
+        function logEvent(type, data = {}) {
+            analyticsData.eventType = type;
+            analyticsData.eventData = data;
+            saveAnalytics();
+        }
+
+        // Função para salvar dados no backend
+        async function saveAnalytics() {
+            analyticsData.endTime = new Date().toISOString();
+            analyticsData.totalTimeOnPage = Math.round((new Date() - analyticsData.pageLoadTime) / 1000);
+            
+            try {
+                const response = await fetch('/api/analytics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(analyticsData)
+                });
+                
+                if (!response.ok) {
+                    console.error('Erro ao salvar dados:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar dados:', error);
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('mousemove', () => {
+            analyticsData.mouseMovements++;
+            analyticsData.lastActivityTime = new Date();
+            analyticsData.sessionInfo.lastActive = new Date().toISOString();
+        });
+
+        document.addEventListener('click', (e) => {
+            analyticsData.lastActivityTime = new Date();
+            analyticsData.sessionInfo.lastActive = new Date().toISOString();
+            
+            const clickData = {
+                elemento: e.target.tagName,
+                posicao: `x: ${e.clientX}, y: ${e.clientY}`,
+                timestamp: new Date().toISOString(),
+                elementPath: getElementPath(e.target)
+            };
+            
+            analyticsData.clicks.push(clickData);
+            logEvent('click', clickData);
+            
+            if (analyticsData.clicks.length > 100) {
+                analyticsData.clicks = analyticsData.clicks.slice(-100);
+            }
+        });
+
+        // Função para obter o caminho do elemento
+        function getElementPath(element) {
+            const path = [];
+            while (element && element.nodeType === Node.ELEMENT_NODE) {
+                let selector = element.nodeName.toLowerCase();
+                if (element.id) {
+                    selector += '#' + element.id;
+                } else if (element.className) {
+                    selector += '.' + Array.from(element.classList).join('.');
+                }
+                path.unshift(selector);
+                element = element.parentNode;
+            }
+            return path.join(' > ');
+        }
+
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            analyticsData.lastActivityTime = new Date();
+            analyticsData.sessionInfo.lastActive = new Date().toISOString();
+            
+            const scrollPercentage = Math.round((window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100);
+            analyticsData.maxScrollPercentage = Math.max(analyticsData.maxScrollPercentage, scrollPercentage);
+            
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                const scrollData = {
+                    porcentagem: scrollPercentage,
+                    timestamp: new Date().toISOString(),
+                    position: window.scrollY
+                };
+                
+                analyticsData.scrollEvents.push(scrollData);
+                logEvent('scroll', scrollData);
+                
+                if (analyticsData.scrollEvents.length > 50) {
+                    analyticsData.scrollEvents = analyticsData.scrollEvents.slice(-50);
+                }
+            }, 500);
+        });
+
+        function handleButtonClick(buttonId) {
+            const clickData = {
+                botao: buttonId,
+                timestamp: new Date().toISOString()
+            };
+            
+            analyticsData.buttonClicks.push(clickData);
+            logEvent('button_click', clickData);
+            
+            if (analyticsData.buttonClicks.length > 50) {
+                analyticsData.buttonClicks = analyticsData.buttonClicks.slice(-50);
+            }
+        }
+
+        // Monitorar visibilidade da página
+        document.addEventListener('visibilitychange', () => {
+            analyticsData.sessionInfo.tabFocused = document.visibilityState === 'visible';
+            logEvent('visibility_change', {
+                state: document.visibilityState,
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        // Monitorar estado da conexão
+        if (navigator.connection) {
+            navigator.connection.addEventListener('change', () => {
+                analyticsData.sessionInfo.connectionType = navigator.connection.effectiveType;
+                logEvent('connection_change', {
+                    type: navigator.connection.effectiveType,
+                    timestamp: new Date().toISOString()
+                });
+            });
+        }
+
+        // Salvar dados periodicamente
+        setInterval(() => {
+            if (analyticsData.sessionInfo.tabFocused) {
+                logEvent('periodic_update');
+            }
+        }, 30000);
+
+        // Enviar dados quando o usuário sair da página
+        window.addEventListener('beforeunload', () => {
+            analyticsData.endTime = new Date().toISOString();
+            logEvent('page_exit');
+            
+            const finalData = {
+                content: '```json\n' + JSON.stringify({
+                    resumo: {
+                        sessaoId: analyticsData.sessionId,
+                        duracao: analyticsData.totalTimeOnPage + ' segundos',
+                        cliquesTotal: analyticsData.clicks.length,
+                        movimentosMouse: analyticsData.mouseMovements,
+                        maxScroll: analyticsData.maxScrollPercentage + '%',
+                        resolucao: analyticsData.screenResolution,
+                        origem: analyticsData.trafficSource,
+                        performance: analyticsData.performance,
+                        timestamp: new Date().toISOString()
+                    }
+                }, null, 2) + '\n```'
+            };
+            
+            navigator.sendBeacon(WEBHOOK_URL, JSON.stringify(finalData));
+        });
+    </script>
+</body>
+</html>

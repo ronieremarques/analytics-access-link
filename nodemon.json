@@ -1,0 +1,5 @@
+{
+    "watch": ["index.js"],
+    "ext": "js",
+    "ignore": ["node_modules/**", "analytics_data.json", "public/**"]
+}
